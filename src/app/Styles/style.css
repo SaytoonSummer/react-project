@@ -1,0 +1,47 @@
+/* Ajuste en medidas a etiquetas generales */
+
+html, body {
+  height: 100%;
+}
+
+footer {
+  margin-top: 40px;
+}
+
+/* Ajuste en medidas en el apartado del nav */
+
+.nav-wrapper li {
+  margin: 0 10px;
+  position: relative;
+}
+
+.nav-wrapper {
+  line-height: 80px;
+}
+
+/* Apartado de creación de un fondo con lineas intercambiadas para las secciones 1, 3 y 5 */
+
+.background-section {
+  background-image: repeating-linear-gradient(-45deg, #8B4513, #8B4513 40px, #CD853F 40px, #CD853F 80px);
+}
+
+.mapouter{
+  position:relative;
+  text-align:right;
+  height:400px;
+  width:100%;
+}
+
+/* Ajustes para la posición correcta del mapa */
+.gmap_canvas {
+  overflow:hidden;
+  background:none;
+  height:400px;
+  width:100%;
+}
+
+
+
+
+
+

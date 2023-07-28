@@ -1,13 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Client } from '../Interfaces/IForm';
-import { obtenerClientes, actualizarCliente } from '../Firebase/Promises';
+import React, { useState } from "react";
+import { Client } from "../Interfaces/IForm"; 
+import { registrarCliente } from "../Firebase/Promises";
 
-export const Update = () => {
-  // Obtenemos el parámetro de la URL para identificar al usuario a actualizar
-  const { id } = useParams<{ id: string }>();
-  // Definimos los estados locales para los campos del formulario y el usuario a actualizar
+export const Contact = () => {
+  // Estados para almacenar los valores de los campos del formulario
   const [nombre, setNombre] = useState("");
+  const [errorNombre, setErrorNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [edad, setEdad] = useState("");
   const [fechaNacimiento, setFechaNacimiento] = useState("");
@@ -15,72 +13,154 @@ export const Update = () => {
   const [email, setEmail] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [tipoEnvio, setTipoEnvio] = useState("");
-  const [usuario, setUsuario] = useState<Client | null>(null);
 
-  // Al cargar el componente, buscamos al usuario con el ID proporcionad
-  useEffect(() => {
-    const fetchUsuario = async () => {
-      try {
-        const clientes = await obtenerClientes();
-        const usuarioEncontrado = clientes.find((u) => u.idCliente === id);
-        // Si encontramos al usuario, actualizamos los estados locales con sus datos
-        if (usuarioEncontrado) {
-          setUsuario(usuarioEncontrado);
-          setNombre(usuarioEncontrado.nombre);
-          setApellido(usuarioEncontrado.apellido);
-          setEdad(usuarioEncontrado.edad.toString());
-          setFechaNacimiento(usuarioEncontrado.fechaNacimiento);
-          setTelefono(usuarioEncontrado.telefono.toString());
-          setEmail(usuarioEncontrado.email);
-          setMensaje(usuarioEncontrado.mensaje);
-          setTipoEnvio(usuarioEncontrado.tipoEnvio);
-        }
-      } catch (error) {
-        console.error("Error al obtener el usuario:", error);
-      }
-    };
-
-    fetchUsuario();
-  }, [id]);
-
-  // Función para manejar la actualización del usuario en la base de datos
-  const handleActualizar = async () => {
-    try {
-      if (usuario && usuario.idCliente) {
-        // Creamos un objeto con los datos actualizados
-        const updatedUsuario: Client = {
-          ...usuario,
-          nombre,
-          apellido,
-          edad: parseInt(edad),
-          fechaNacimiento,
-          telefono: parseInt(telefono),
-          email,
-          mensaje,
-          tipoEnvio,
-        };
-
-        // Llamamos a la función que actualiza al usuario en la base de datos
-        await actualizarCliente(usuario.idCliente, updatedUsuario);
-        alert("¡Usuario actualizado con éxito!");
-      } else {
-        alert("No se encontró el usuario para actualizar.");
-      }
-    } catch (error) {
-      console.error("Error al actualizar el usuario:", error);
-      alert("Hubo un error al actualizar el usuario. Por favor, inténtalo de nuevo.");
+   // Funciones para manejar los cambios en los campos del formulario
+   const handleNombreChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    // Expresión regular para buscar dígitos numéricos
+    const hasNumbers = /\d/.test(value);
+  
+    // Si el valor contiene dígitos numéricos, no lo actualizamos
+    if (!hasNumbers) {
+      setNombre(value);
+    }
+    else{
+      alert("Este campo no puede contener números")
+    }
+  };
+  
+  const handleApellidoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    // Expresión regular para buscar dígitos numéricos
+    const hasNumbers = /\d/.test(value);
+  
+    // Si el valor contiene dígitos numéricos, no lo actualizamos
+    if (!hasNumbers) {
+      setApellido(value);
+    }
+    else{
+      alert("Este campo no puede contener números")
     }
   };
 
-  // Si no se ha encontrado el usuario aún, mostramos un mensaje de carga
-  if (!usuario) {
-    return <div>Cargando...</div>;
-  }
+  const handleEdadChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(event.target.value);
+    if (!isNaN(value) && value >= 0) {
+      setEdad(value.toString());
+    }
+  };
+
+
+  const handleFechaNacimientoChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFechaNacimiento(event.target.value);
+  };
+
+  const handleTelefonoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    const onlyNums = value.replace(/[^0-9]/g, ''); // Eliminar cualquier caracter que no sea número
+    const validPhoneNumber = onlyNums.slice(0, 9); // Tomar solo los primeros 9 dígitos
   
-  // Renderizamos el formulario de actualización con los datos del usuario
+    setTelefono(validPhoneNumber);
+  };
+
+  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value);
+  };
+
+  const handleMensajeChange = (
+    event: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    setMensaje(event.target.value);
+  };
+
+  const handleTipoEnvioChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setTipoEnvio(event.target.value);
+  };
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+  
+    if (nombre.trim() === "") {
+      setErrorNombre("El campo Nombre no puede estar en blanco");
+      alert("El campo Nombre no puede estar en blanco")
+      return;
+    } else {
+      setErrorNombre("");
+    }
+
+    if (apellido.trim() === "") {
+      alert("El campo Apellido no puede estar en blanco")
+      return;
+    }
+
+    if (telefono.trim() === "") {
+      alert("El campo de teléfono es obligatorio")
+      return;
+    }
+
+    if (fechaNacimiento.trim() === "") {
+      alert("El campo de fecha de nacimiento es obligatorio")
+      return;
+    }
+
+    if (telefono.length !== 9) {
+      alert("El número de teléfono debe tener 9 dígitos")
+      return;
+    }
+  
+    if (edad.trim() === "" || parseInt(edad) < 18) {
+      alert("Por favor, ingrese una edad válida (mayor o igual a 18 años).");
+      return;
+    }
+  
+    if (!tipoEnvio) {
+      alert("Por favor, seleccione un tipo de envío");
+      return;
+    }
+  
+    const clientData: Client = {
+      nombre,
+      apellido,
+      edad: parseInt(edad),
+      fechaNacimiento,
+      telefono: parseInt(telefono),
+      email,
+      mensaje,
+      tipoEnvio,
+    };
+    registrarCliente(clientData);
+  
+    alert("¡Formulario enviado con éxito!");
+  };
+
+// Componente de formulario de contacto. Regresa todo el formulario con los datos para que el usuario registre, y se guarden con un onChange. Se hizo uso especial de un checked para el radio.
   return (
     <section className="background-section" id="Contacto">
       <div className="container">
+        <div className="row">
+          <div className="col s12 center-align">
+            <div
+              className="card white lighten-5"
+              style={{ borderRadius: "20px" }}
+            >
+              <div className="card-content center-align">
+                <h2
+                  style={{
+                    fontSize: "48px",
+                    color: "#8d6e63",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Contacto
+                </h2>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="row">
           <div className="col s12 m8 offset-m2">
             <div
@@ -99,15 +179,14 @@ export const Update = () => {
                   color: "#1a1918",
                 }}
               >
-                <h2>Actualizar Usuario</h2>
-                <form>
+                <form onSubmit={handleSubmit}>
                   <div className="row">
                     <div className="input-field col s12 m6">
                       <input
                         id="nombre"
                         type="text"
+                        onChange={handleNombreChange}
                         value={nombre}
-                        onChange={(e) => setNombre(e.target.value)}
                         className="validate"
                       />
                       <label htmlFor="nombre">Nombre</label>
@@ -116,8 +195,8 @@ export const Update = () => {
                       <input
                         id="apellido"
                         type="text"
+                        onChange={handleApellidoChange}
                         value={apellido}
-                        onChange={(e) => setApellido(e.target.value)}
                         className="validate"
                       />
                       <label htmlFor="apellido">Apellido</label>
@@ -128,8 +207,8 @@ export const Update = () => {
                       <input
                         id="edad"
                         type="number"
+                        onChange={handleEdadChange}
                         value={edad}
-                        onChange={(e) => setEdad(e.target.value)}
                         className="validate"
                       />
                       <label htmlFor="edad">Edad</label>
@@ -140,11 +219,13 @@ export const Update = () => {
                       <input
                         id="fechaNacimiento"
                         type="date"
+                        onChange={handleFechaNacimientoChange}
                         value={fechaNacimiento}
-                        onChange={(e) => setFechaNacimiento(e.target.value)}
                         className="validate"
                       />
-                      <label htmlFor="fechaNacimiento">Fecha de Nacimiento</label>
+                      <label htmlFor="fechaNacimiento">
+                        Fecha de Nacimiento
+                      </label>
                     </div>
                   </div>
                   <div className="row">
@@ -152,8 +233,8 @@ export const Update = () => {
                       <input
                         id="telefono"
                         type="tel"
+                        onChange={handleTelefonoChange}
                         value={telefono}
-                        onChange={(e) => setTelefono(e.target.value)}
                         className="validate"
                       />
                       <label htmlFor="telefono">Teléfono</label>
@@ -162,8 +243,8 @@ export const Update = () => {
                       <input
                         id="email"
                         type="email"
+                        onChange={handleEmailChange}
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
                         className="validate"
                       />
                       <label htmlFor="email">Correo Electrónico</label>
@@ -174,8 +255,8 @@ export const Update = () => {
                       <textarea
                         id="mensaje"
                         className="materialize-textarea"
+                        onChange={handleMensajeChange}
                         value={mensaje}
-                        onChange={(e) => setMensaje(e.target.value)}
                       ></textarea>
                       <label htmlFor="mensaje">Mensaje</label>
                     </div>
@@ -187,8 +268,8 @@ export const Update = () => {
                           type="radio"
                           name="envio"
                           value="normal"
+                          onChange={handleTipoEnvioChange}
                           checked={tipoEnvio === "normal"}
-                          onChange={() => setTipoEnvio("normal")}
                         />
                         <span>Envío normal</span>
                       </label>
@@ -199,8 +280,8 @@ export const Update = () => {
                           type="radio"
                           name="envio"
                           value="express"
+                          onChange={handleTipoEnvioChange}
                           checked={tipoEnvio === "express"}
-                          onChange={() => setTipoEnvio("express")}
                         />
                         <span>Envío express</span>
                       </label>
@@ -210,9 +291,8 @@ export const Update = () => {
                     <div className="col s12 center-align">
                       <button
                         className="btn waves-effect waves-light"
-                        type="button"
+                        type="submit"
                         name="action"
-                        onClick={handleActualizar}
                       >
                         Enviar
                       </button>
